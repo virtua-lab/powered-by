@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VSP Official | PDF to HTML Converter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Outfit:wght@300;400;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --bg: #0f172a;
+      --card-bg: rgba(30, 41, 59, 0.7);
+      --border: rgba(255, 255, 255, 0.1);
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --glass-blur: blur(12px);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', 'Outfit', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      background-image:
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      padding: 2rem;
+      z-index: 1;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(to right, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .upload-card {
+      background: var(--card-bg);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 3rem;
+      text-align: center;
+      transition: all 0.3s ease;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    .upload-card.drag-over {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.1);
+      transform: scale(1.02);
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 16px;
+      padding: 4rem 2rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .drop-zone>* {
+      pointer-events: none;
+    }
+
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .icon-box {
+      width: 80px;
+      height: 80px;
+      background: rgba(99, 102, 241, 0.1);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      color: var(--primary);
+    }
+
+    #file-info {
+      margin-top: 1.5rem;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .file-size {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 2rem;
+      font-size: 1rem;
+      display: none;
+      width: 100%;
+    }
+
+    .btn:hover {
+      background: var(--primary-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #result-section {
+      display: none;
+      margin-top: 2rem;
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 16px;
+      padding: 1.5rem;
+      text-align: left;
+    }
+
+    .result-title {
+      color: #4ade80;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .url-box {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-family: monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .url-text {
+      color: #818cf8;
+      font-weight: bold;
+    }
+
+    .copy-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .status-info {
+      margin-top: 1rem;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+      display: none;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    footer {
+      margin-top: auto;
+      padding: 2rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    /* 追加スタイル */
+    .settings-btn {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .settings-btn:hover {
+      color: var(--text);
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      backdrop-filter: blur(5px);
+    }
+
+    .modal {
+      background: #1e293b;
+      padding: 2rem;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 400px;
+      border: 1px solid var(--border);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .input-group {
+      margin-bottom: 1.25rem;
+      text-align: left;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      color: white;
+      font-family: monospace;
+    }
+
+    .note {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+    }
+
+    .status-steps {
+      display: flex;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      justify-content: center;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .step {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      opacity: 0.5;
+      transition: all 0.3s;
+    }
+
+    .step.completed {
+      color: #4ade80;
+      opacity: 1;
+    }
+
+    .step.active {
+      color: #818cf8;
+      opacity: 1;
+      font-weight: bold;
+      animation: pulse 2s infinite;
+    }
+
+    .btn-secondary {
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    @keyframes pulse {
+      50% {
+        opacity: 0.6;
+      }
+    }
+  </style>
+  <script type="module" crossorigin src="./assets/index-Dc8PzLSk.js"></script>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>VSP HTML Generator</h1>
+      <p class="subtitle">PDFを軽量なスマホ最適化ページへ変換</p>
+    </header>
+
+    <div class="settings-btn" id="settings-btn" title="GitHub設定">
+      <i data-lucide="settings" size="24"></i>
+    </div>
+
+    <main class="upload-card" id="main-card">
+      <div class="drop-zone" id="drop-zone">
+        <input type="file" id="file-input" accept="application/pdf" style="display: none;">
+        <div class="icon-box">
+          <i data-lucide="cloud-upload" size="32"></i>
+        </div>
+        <h3>PDFをアップロードして公開</h3>
+        <p style="color: var(--text-muted); margin-top: 0.5rem;">ドラッグ＆ドロップで自動公開</p>
+
+        <div id="file-info">
+          <p class="file-name" id="selected-file-name"></p>
+          <p class="file-size" id="selected-file-size"></p>
+        </div>
+      </div>
+
+      <button id="convert-btn" class="btn">
+        <span class="btn-text">変換して公開する</span>
+        <div class="spinner" id="btn-spinner"></div>
+      </button>
+
+      <div id="result-section">
+        <div class="result-title">
+          <i data-lucide="check-circle" size="20"></i>
+          <span>公開準備完了！</span>
+        </div>
+
+        <div class="status-steps">
+          <div class="step completed" id="step-convert">
+            <i data-lucide="file-check" size="16"></i> 変換完了
+          </div>
+          <div class="step" id="step-upload">
+            <i data-lucide="upload-cloud" size="16"></i> Up中...
+          </div>
+          <div class="step" id="step-deploy">
+            <i data-lucide="clock" size="16"></i> 公開待ち
+          </div>
+        </div>
+
+        <p class="url-label" style="text-align:left; margin-bottom:0.5rem; font-size:0.9rem; color:#94a3b8;">公開予定URL
+          (数分後に有効):</p>
+        <div class="url-box">
+          <span class="url-text" id="generated-url"></span>
+          <button class="copy-btn" id="copy-url">
+            <i data-lucide="copy" size="18"></i>
+          </button>
+        </div>
+        <p class="status-info">※ GitHub Pagesの反映には1～3分かかります。</p>
+
+        <button id="download-btn" class="btn btn-secondary"
+          style="margin-top: 1rem; background: rgba(255,255,255,0.1);">
+          念のためzipも保存する
+        </button>
+      </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settings-modal">
+      <div class="modal">
+        <div class="modal-header">
+          <h2>GitHub連携設定</h2>
+          <button class="close-btn" id="close-settings"><i data-lucide="x" size="20"></i></button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc" style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 1.5rem;">
+            自動公開するために、あなたのGitHubリポジトリ情報を入力してください。<br>
+            この情報はブラウザ内にのみ保存されます。
+          </p>
+
+          <div class="input-group">
+            <label>GitHubユーザー名</label>
+            <input type="text" id="gh-username" placeholder="例: yamada-taro">
+          </div>
+
+          <div class="input-group">
+            <label>リポジトリ名</label>
+            <input type="text" id="gh-repo" placeholder="例: pdf-viewer">
+          </div>
+
+          <div class="input-group">
+            <label>アクセストークン (PAT)</label>
+            <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx...">
+            <p class="note">※ 'repo' 権限を持ったトークンが必要です</p>
+          </div>
+
+          <button id="save-settings" class="btn" style="display: block; width: 100%;">設定を保存</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      &copy; 2026 VSP Official Tools. All Rights Reserved.
+    </footer>
+  </div>
+
+  <script src="https://unpkg.com/lucide@latest"></script>
+</body>
+
+</html>
